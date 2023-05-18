@@ -1,14 +1,23 @@
 #include <stdlib.h>
-#include "stdio.h"
+#include <stdio.h>
 #include <memory.h>
+#include <sal.h>
 
 #define MIN_BUFF_LEN 8
 
-bool Fuzz(char* pBuf, unsigned int len, unsigned int *pOutlen) { // TODO: add SAL
+bool Fuzz(
+	_Inout_updates_bytes_(*pLen) char* pBuf, 
+	_Inout_						 unsigned int *pLen) { 
+
 	bool ok = true;
+
+	// check for nulls
+	if (pBuf == NULL || pLen == NULL) {
+		return false;
+	}
 	
 	// if data is too small to fuzz, return false
-	if (len < MIN_BUFF_LEN) {
+	if (*pLen < MIN_BUFF_LEN) {
 		return false;
 	}
 	
@@ -18,8 +27,8 @@ bool Fuzz(char* pBuf, unsigned int len, unsigned int *pOutlen) { // TODO: add SA
 	}
 
 	// get a random range to fuzz
-	unsigned int start = rand() % len;
-	unsigned int end = rand() % len;
+	unsigned int start = rand() % *pLen;
+	unsigned int end = rand() % *pLen;
 	if (start > end) {
 		unsigned int tmp = start;
 		start = end;
@@ -30,8 +39,6 @@ bool Fuzz(char* pBuf, unsigned int len, unsigned int *pOutlen) { // TODO: add SA
 	if (end - start <= MIN_BUFF_LEN/2) {
 		return false;
 	}
-
-	*pOutlen = len;
 
 	// how many loops through the fuzzer?
 	unsigned int iterations = rand() % 10;
@@ -109,7 +116,7 @@ bool Fuzz(char* pBuf, unsigned int len, unsigned int *pOutlen) { // TODO: add SA
 
 			// truncate
 			case 7:
-				*pOutlen = end;
+				*pLen = end;
 				break;
 
 			default:
@@ -126,19 +133,17 @@ int main()
 	unsigned int count = 0;
 	while (1) {
 		char buf[201];
-		memset(buf, 0, sizeof(buf));
-		memset(buf, 'A', sizeof(buf)-1);
+		memset(buf, 'A', sizeof(buf));
 
 		unsigned int len = sizeof(buf);
-		unsigned int outlen = 0;
+		bool fOk = Fuzz(buf, &len);
 
-		bool fok = Fuzz(buf, len, &outlen);
-		if (fok) {
+		if (fOk) {
 			char buf2[201];
-			memset(buf2, 0, sizeof(buf2));
-			memcpy(buf2, buf, outlen);
+			memcpy(buf2, buf, len);
+			buf2[len-1] = 0;
 
-			printf("[iter: %d] size=%d\n ", ++count,outlen);
+			printf("\n[iter: %d] size=%d\n\t%s ", ++count, len, buf2);
 		}
 	}
 }
