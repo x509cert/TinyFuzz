@@ -41,7 +41,7 @@ bool Fuzz(
 	}
 
 	// how many loops through the fuzzer?
-	unsigned int iterations = rand() % 10;
+	unsigned int iterations = 1 + rand() % 10;
 	for (unsigned int i = 0; i < iterations; i++) {
 
 		unsigned int skip = rand() % 10 > 7 ? 1 + rand() % 10 : 1;
@@ -82,7 +82,7 @@ bool Fuzz(
 				}
 				break;
 
-			// set the first zero-byte to non-zero
+			// set the first zero-byte found to non-zero
 			case 4: 
 				{
 					for (j = start; j < end; j += skip) {
