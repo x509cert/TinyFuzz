@@ -36,7 +36,7 @@ bool Fuzz(
 	}
 
 	// don't fuzz everything
-	if ((rand() % 100) > 25) {
+	if ((rand() % 100) > fuzzPercent) {
 		return false;
 	}
 
